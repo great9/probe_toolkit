@@ -1,0 +1,35 @@
+"""
+TABLE_N		COLUMN_N	POSTGRES_TYPE		SQLITE_TYPE
+probe_id
+			src			macaddr				CHARACTER
+			essid		char varying 32		NATIVE CHARACTER
+			bssid		macaddr				CHARACTER
+			dst			macaddr				CHARACTER
+			first_seen	timestamp w/o tz	DATETIME
+			last_seen	timestamp w/o tz	DATETIME
+
+probe_log
+			datetime	timestamp w/o tz	DATETIME
+			src			macaddr				CHARACTER
+			signal		smallint			SMALLINT
+"""
+
+
+
+# create user on system
+adduser probe_toolkit
+VerySecretPassword <-- this password will be for the user, not remote log into postgresql
+
+# log into postgres
+# create user
+# create db (probe) and assing user (probe_toolkit) to it
+su - postgres
+createuser probe_toolkit
+createdb -O probe_toolkit probe
+
+su - probe_toolkit
+psql -d probe
+ALTER ROLE probe_toolkit WITH ENCRYPTED PASSWORD 'VerySecretPassword2';
+												^-- this will be our remote login password
+
+https://wiki.debian.org/PostgreSql
