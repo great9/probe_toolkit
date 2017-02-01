@@ -89,14 +89,14 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 			_src = pattern_src.search(row)
 			_src = set_match_value(_src,1)
 			if _src == "NOT_SET":
-				out.output("WARNING","Something is wrong, src NOT_SET breaking..")
-				break
+				out.output("WARNING","src not matched. Line: \"{}\"".format(row))
+				continue
 
 			_essid = pattern_essid.search(row)
 			_essid = set_match_value(_essid,1)
 			if len(_essid) >32:
-				out.output("WARNING","SSID is too long, something is wrong.")
-				break
+				out.output("WARNING","SSID is too long. SSID: \"{}\", Line: \"{}\"".format(_essid,row))
+				continue
 
 			level = "NOTICE"
 
