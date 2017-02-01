@@ -107,4 +107,7 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 			out.output(level,"\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(_freq,_std,_ant,_sig,_bssid,_dst,_src,_rate,_essid),_datetime)
 
 	except KeyboardInterrupt:
-		p.kill() # need to do a check here if run as root or sudo
+		if config['general']['use_sudo']:
+			os.system("sudo kill {}".format(p.pid))
+		else:
+			p.kill()
