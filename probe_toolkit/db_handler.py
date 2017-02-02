@@ -41,7 +41,7 @@ class db_handler(object):
 		with self.con:
 			q = { 'probe_id' : 
 				"""CREATE TABLE probe_id (
-					src macaddr,
+					src macaddr primary key,
 					dst macaddr,
 					bssid macaddr,
 					first_seen timestamp without time zone,
@@ -51,7 +51,7 @@ class db_handler(object):
 				'probe_log' : 
 				"""CREATE TABLE probe_log (
 					datetime timestamp without time zone,
-					src macaddr,
+					src macaddr references probe_id(src),
 					signal smallint
 				);""" }
 			cur = self.con.cursor()
@@ -73,7 +73,7 @@ class db_handler(object):
 			cur = self.con.cursor()
 			q = { 'probe_id' :
 				"""CREATE TABLE probe_id(
-						src CHARACTER,
+						src CHARACTER PRIMARY KEY,
 						essid NATIVE CHARACTER,
 						bssid CHARACTER,
 						dst CHARACTER,
@@ -84,7 +84,8 @@ class db_handler(object):
 					"""CREATE TABLE probe_log(
 						datetime DATETIME,
 						src CHARACTER,
-						signal SMALLINT
+						signal SMALLINT,
+						FOREIGN KEY(src) REFERENCES probe_id(src)
 					);""" }
 			cur.execute(q[table_name])
 			self.con.commit()

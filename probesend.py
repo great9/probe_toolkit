@@ -12,6 +12,7 @@ from probe_toolkit.output_handler import output_handler
 # [ Sources ]
 ### http://blog.packetheader.net/2014/01/sending-80211-packets-with-scapy.html
 ### https://www.centos.org/docs/5/html/5.2/Virtualization/sect-Virtualization-Tips_and_tricks-Generating_a_new_unique_MAC_address.html
+### http://www.willhackforsushi.com/papers/80211_Pocket_Reference_Guide.pdf
 
 src='ff:ff:ff:ff:ff:ff'
 

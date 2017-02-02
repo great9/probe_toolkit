@@ -100,10 +100,10 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 
 			level = "NOTICE"
 
-			db.insert_probe_log(_datetime,_src,_sig)
 			if not db.update_probe_id_last_seen(_src,_bssid,_essid,_datetime): # if this failes then; insert ..
 				if db.insert_probe_id(_src,_dst,_bssid,_datetime,_datetime,_essid):
 					level = "INFO" # cause it's a new entry :-)
+			db.insert_probe_log(_datetime,_src,_sig)
 			out.output(level,"\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(_freq,_std,_ant,_sig,_bssid,_dst,_src,_rate,_essid),_datetime)
 
 	except KeyboardInterrupt:
