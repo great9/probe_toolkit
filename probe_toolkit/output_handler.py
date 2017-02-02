@@ -1,7 +1,6 @@
 import datetime
 class output_handler(object):
 	def __init__(self,config):
-		#self.line_buffer = list()
 		self.height = 0
 		self.width = 0
 		self.header = """probe_toolkit - probecap\n"""
@@ -46,7 +45,10 @@ class output_handler(object):
 
 		self.print_vars(config)
 
-	def __exit__():
+	def __enter__(self):
+		return self
+
+	def __exit__(self, exc_type, exc_value, traceback):
 		self.log_file.close()
 
 	# Need to do this after something changed, example the header size
@@ -98,7 +100,6 @@ class output_handler(object):
 	def print_buffer(self):
 		print(chr(27) + "[2J") #http://bluesock.org/~willg/dev/ansi.html
 		print(self.header)	
-		# if we do this the above way, we need atleast 153 chars width
 		for l in self.line_buffer:
 			print(l)
 
