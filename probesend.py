@@ -61,12 +61,12 @@ datetime\t\t\t\tcount\tsource\t\t\tssid
 -----------------------\t\t\t---\t------------------\t--------------------------------"""
 test = gen_ssid()
 time.sleep(1)
-for mask in config['probe_send']['mask_files']:
+for mask in config['probesend']['mask_files']:
 	out.output("DEBUG",mask)
 	test.mask_file=mask
 	test.load_mask_file()
 
 while True:
 	test.set_random_mask()
-	transmit_probe_request(out,config['probe_send']['mon_if'],count=config['probe_send']['count'],ssid=test.do_mask())
-	time.sleep(config['probe_send']['interval'])
+	transmit_probe_request(out,config['probesend']['mon_if'],count=config['probesend']['count'],ssid=test.do_mask())
+	time.sleep(config['probesend']['interval'])

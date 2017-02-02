@@ -27,6 +27,9 @@ class output_handler(object):
 					'out_notice'	: 1,
 					'out_debug'		: 1
 				}
+		self.disable_color = 0
+		if config['disable_color']:
+			self.disable_color = config['disable_color']
 		self.set_dimensions(config)
 		self.line_buffer = [""]*self.height
 		self.set_vars(self.out,config)
@@ -113,7 +116,7 @@ class output_handler(object):
 			msg += " "
 		return msg
 		
-	def output(self,msg_level,msg,msg_datetime=str(datetime.datetime.now())):
+	def output(self,msg_level,msg,msg_datetime=str(datetime.datetime.now())[:19]):
 		switch = { 'ERROR'	: (self.log['log_error'],self.out['out_error'],self.color['RED_BLACK']),
 					'INFO'	: (self.log['log_info'],self.out['out_info'],self.color['GREEN_WHITE']),
 					'NOTICE': (self.log['log_notice'],self.out['out_notice'],self.color['BLUE_WHITE']),
@@ -123,9 +126,10 @@ class output_handler(object):
 		if switch[msg_level][0]:
 			self.log_file.write(msg_datetime + "," + msg_level + "," + msg + "\n");
 		if switch[msg_level][1]:
-			msg = "[" + msg_datetime + " " + msg_level + "] " + msg
+			msg = "[" + msg_datetime + " " + msg_level.ljust(6) + "] " + msg
 			msg = self.fill_str_size(msg)
-			msg = self.add_coloring(msg,switch[msg_level][2])
+			if not self.disable_color:
+				msg = self.add_coloring(msg,switch[msg_level][2])
 			self.update_buffer(msg)
 			self.print_buffer()
 		self.log_file.flush()
