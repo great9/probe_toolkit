@@ -55,6 +55,7 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 	pattern_essid = re.compile("Probe Request \((.*?)\)")
 
 	try:
+		previous = ""
 		for row in iter(p.stdout.readline, b''):
 			_datetime = str(datetime.date.today())
 			_datetime += " {}".format(row[:8])
@@ -89,7 +90,7 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 			_src = pattern_src.search(row)
 			_src = set_match_value(_src,1)
 			if _src == "NOT_SET":
-				out.output("WARNING","src not matched. Line: \"{}\"".format(row))
+				out.output("WARNING","no src matched. Line: \"{}\"".format(row))
 				continue
 
 			_essid = pattern_essid.search(row)
@@ -98,13 +99,18 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 				out.output("WARNING","SSID is too long. SSID: \"{}\", Line: \"{}\"".format(_essid,row))
 				continue
 
-			level = "NOTICE"
 
-			if not db.update_probe_id_last_seen(_src,_bssid,_essid,_datetime): # if this failes then; insert ..
-				if db.insert_probe_id(_src,_dst,_bssid,_datetime,_datetime,_essid):
+			level = "NOTICE"
+			db.insert_probe_id(_src)
+			if not db.update_probe_log_ap_last_seen(_src,_bssid,_essid,_datetime): # if this failes then; insert ..
+				if db.insert_probe_log_ap(_src,_dst,_bssid,_datetime,_datetime,_essid):
 					level = "INFO" # cause it's a new entry :-)
-			db.insert_probe_log(_datetime,_src,_sig)
+			if previous == (_datetime+""+_src+""+_sig):
+				out.output("DEBUG","Skipped duplicate input: {}".format(previous))
+			else:
+				db.insert_probe_log_signal(_datetime,_src,_sig)
 			out.output(level,"\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(_freq,_std,_ant,_sig,_bssid,_dst,_src,_rate,_essid),_datetime)
+			previous = (_datetime+""+_src+""+_sig)
 
 	except KeyboardInterrupt:
 		if config['general']['use_sudo']:

@@ -91,7 +91,7 @@ class output_handler(object):
 		for k in self.out:
 			self.output("DEBUG",k+" "+str(self.out[k]))
 		for k in config:
-			self.output("DEBUG","CONFIG:"+k+" "+str(config[k]))
+			self.output("DEBUG","OUTPUT_CONFIG:"+k+" "+str(config[k]))
 
 	def update_buffer(self,line):
 		if len(self.line_buffer) == self.height:
