@@ -67,7 +67,7 @@ class output_handler(object):
 	# Need to do this after something changed, example the header size
 	# This will reset the line buffer
 	def set_dimensions(self):
-		height_offet = 1
+		height_offet = 2
 		if not self.config['height'] or not self.config['width']:
 			import os
 			term_rows, term_columns = os.popen('stty size', 'r').read().split() # https://stackoverflow.com/questions/566746/how-to-get-console-window-width-in-python
