@@ -27,8 +27,8 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 		sys.exit(2)
 	
 	out = output_handler(config['output'])
-	out.header += """datetime\t\t\tfreq\tstd\tant\tsignal\tbssid\t\t\tdst\t\t\tsrc\t\t\trate\t\tessid
------------------------\t\t----\t---\t-\t---\t------------------\t------------------\t------------------\t--------\t--------------------------------"""
+	out.header += """datetime\t\t\tfreq  std  ant   signal    bssid              dst                src                rate      essid
+-----------------------------  ----  ---  -     ---       -----------------  -----------------  -----------------  --------  --------------------------------"""
 	"""
 		tcpdump -i $wifi_if -e -s 256 type mgt subtype probe-req
 		-i								interface
@@ -99,7 +99,6 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 				out.output("WARNING","SSID is too long. SSID: \"{}\", Line: \"{}\"".format(_essid,row))
 				continue
 
-
 			level = "NOTICE"
 			db.insert_probe_id(_src)
 			if not db.update_probe_log_ap_last_seen(_src,_bssid,_essid,_datetime): # if this failes then; insert ..
@@ -109,7 +108,7 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 				out.output("DEBUG","Skipped duplicate input: {}".format(previous))
 			else:
 				db.insert_probe_log_signal(_datetime,_src,_sig)
-			out.output(level,"\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(_freq,_std,_ant,_sig,_bssid,_dst,_src,_rate,_essid),_datetime)
+			out.output(level," {}  {}  {}     {}       {}  {}  {}  {}  {}".format(_freq,_std,_ant,_sig,_bssid,_dst,_src,_rate,_essid),_datetime)
 			previous = (_datetime+""+_src+""+_sig)
 
 	except KeyboardInterrupt:
