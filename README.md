@@ -32,7 +32,9 @@ output = {	'height'		        : 0,				# 0 means auto else use screen height in ch
 			'out_error'				: '1',
 			'out_warn'				: '0',
 			'out_info'				: '1',
-			'out_notice'			: '1'
+			'out_notice'			: '1',
+			'disable_color'	: False,
+			'time_ago_format': True,
 }
 db_conf = {	'db_type'		        : '2', 
 			'pg_host'				: '127.0.0.1',
