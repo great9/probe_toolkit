@@ -101,7 +101,7 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 
 			level = "NOTICE"
 			db.insert_probe_id(_src)
-			if not db.update_probe_log_ap_last_seen(_src,_bssid,_essid,_datetime): # if this failes then; insert ..
+			if db.update_probe_log_ap_last_seen(_src,_bssid,_essid,_datetime) == False: # if this failes then; insert ..
 				if db.insert_probe_log_ap(_src,_dst,_bssid,_datetime,_datetime,_essid):
 					level = "INFO" # cause it's a new entry :-)
 			if previous == (_datetime+""+_src+""+_sig):
