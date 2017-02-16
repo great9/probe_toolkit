@@ -35,13 +35,28 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 		-l								make stdout line buffered
 		-e								print link header, else it won't print adresses
 		-s								snaplength
-		type mgt subtype probe-req		probe filter options
+		type mgt subtype probe-req					probe filter options
 	"""
-	if config['general']['use_sudo']:
-		p = sub.Popen(('sudo', 'tcpdump', '-i', config['general']['mon_if'], '-l', '-e', '-s', '256', 'type mgt subtype probe-req'), stdout=sub.PIPE)
+	if 'dump' not in config['general']:
+		config['general']['dump'] = False
+	if 'dumpfile' not in config['general']:
+		config['general']['dump'] = 'probe.dump'
+	if 'use_sudo' not in config['general']:
+		config['general']['use_sudo'] = False
+	if config['general']['use_sudo'] == True:
+		if config['general']['dump'] == True:
+			o = sub.Popen(('sudo', 'tcpdump', '-i', config['general']['mon_if'], '-U', '-s', '256', 'type mgt subtype probe-req', '-w', '-'), stdout=sub.PIPE)
+			l = sub.Popen(('tee', config['general']['dumpfile']), stdin=o.stdout, stdout=sub.PIPE)
+			p = sub.Popen(('tcpdump', '-l', '-e', '-r', '-'), stdin=l.stdout, stdout=sub.PIPE)
+		else:
+			p = sub.Popen(('sudo', 'tcpdump', '-i', config['general']['mon_if'], '-l', '-e', '-s', '256', 'type mgt subtype probe-req'), stdout=sub.PIPE)
 	else:
-		p = sub.Popen(('tcpdump', '-i', config['general']['mon_if'], '-l', '-e', '-s', '256', 'type mgt subtype probe-req'), stdout=sub.PIPE)
-
+		if config['general']['dump'] == True:
+			o = sub.Popen(('tcpdump', '-i', config['general']['mon_if'], '-U', '-s', '256', 'type mgt subtype probe-req', '-w', '-'), stdout=sub.PIPE)
+			l = sub.Popen(('tee', config['general']['dumpfile']), stdin=o.stdout, stdout=sub.PIPE)
+			p = sub.Popen(('tcpdump', '-l', '-e', '-r', '-'), stdin=l.stdout, stdout=sub.PIPE)
+		else:
+			p = sub.Popen(('tcpdump', '-i', config['general']['mon_if'], '-l', '-e', '-s', '256', 'type mgt subtype probe-req'), stdout=sub.PIPE)
 	db = db_handler(config['db_conf'])
 
 	pattern_freq = re.compile("((\d{4}) (M|G)hz)", re.IGNORECASE)
