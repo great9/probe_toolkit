@@ -52,7 +52,7 @@ def transmit_probe_request(out,iface='mon0',count=1,ssid='LOL'):
 
 config = {}
 try:
-	execfile("probe_toolkit.conf", config)
+	execfile("probesend.conf", config)
 except:
 	print """No config file found or error, exiting."""
 

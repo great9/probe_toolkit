@@ -20,7 +20,7 @@ def main():
 if __name__ == "__main__":
 	config = {}
 	try:
-		execfile("probe_toolkit.conf", config)
+		execfile("probecap.conf", config)
 	except:
 		print """No config file found or error, exiting.
 Please be sure you have a valid probe_toolkit.conf in this dir."""
