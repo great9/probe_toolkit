@@ -14,11 +14,20 @@ For sending probe requests (for testing only now,don't expect this to work prope
 ####probe_toolkit.conf
 You need at least to set **mon_if** (wich is your wireless interface in monitor mode) in **general** and configure a db in **db_conf**
 
-Simple SQLite example 
+####pcap2fingerdict.py
+Will generate device (NOT USER) fingerprints from probe requests.
+First argument: path to pcap file
+Second argument: path to save or update the output to
+
+```pcap2fingerdict.py dump.pcap fingerprints.py```
+
+
+####Simple SQLite config example for probecap.py
 ```
 general = { 'use_sudo'              : 1,
 			'mon_if'				: 'wlan0',
-			'max_lines'				: 0			
+			'dumpfile'				: 'dump.dump',			# File to dump to if dump is True (for debugging)
+			'dump'					: False,			
 }
 output = {	'height'		        : 0,				# 0 means auto else use screen height in characters
 			'width'			    	: 0,
@@ -33,8 +42,8 @@ output = {	'height'		        : 0,				# 0 means auto else use screen height in ch
 			'out_warn'				: '0',
 			'out_info'				: '1',
 			'out_notice'			: '1',
-			'disable_color'	: False,
-			'time_ago_format': True,
+			'disable_color'			: False,
+			'time_ago_format'		: True,
 }
 db_conf = {	'db_type'		        : '2', 
 			'pg_host'				: '127.0.0.1',
