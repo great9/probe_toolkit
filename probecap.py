@@ -43,20 +43,26 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 		config['general']['dump'] = 'probe.dump'
 	if 'use_sudo' not in config['general']:
 		config['general']['use_sudo'] = False
+	print type(config['general']['cap_size'])
+	if 'cap_size' not in config['general']:
+		config['general']['cap_size'] = 256
+	elif not isinstance(config['general']['cap_size'], int):
+		config['general']['cap_size'] = 256
+	config['general']['cap_size'] = str(config['general']['cap_size'])
 	if config['general']['use_sudo'] == True:
 		if config['general']['dump'] == True:
-			o = sub.Popen(('sudo', 'tcpdump', '-i', config['general']['mon_if'], '-U', '-s', '256', 'type mgt subtype probe-req', '-w', '-'), stdout=sub.PIPE)
+			o = sub.Popen(('sudo', 'tcpdump', '-i', config['general']['mon_if'], '-U', '-s', config['general']['cap_size'], 'type mgt subtype probe-req', '-w', '-'), stdout=sub.PIPE)
 			l = sub.Popen(('tee', config['general']['dumpfile']), stdin=o.stdout, stdout=sub.PIPE)
 			p = sub.Popen(('tcpdump', '-l', '-e', '-r', '-'), stdin=l.stdout, stdout=sub.PIPE)
 		else:
-			p = sub.Popen(('sudo', 'tcpdump', '-i', config['general']['mon_if'], '-l', '-e', '-s', '256', 'type mgt subtype probe-req'), stdout=sub.PIPE)
+			p = sub.Popen(('sudo', 'tcpdump', '-i', config['general']['mon_if'], '-l', '-e', '-s', config['general']['cap_size'], 'type mgt subtype probe-req'), stdout=sub.PIPE)
 	else:
 		if config['general']['dump'] == True:
-			o = sub.Popen(('tcpdump', '-i', config['general']['mon_if'], '-U', '-s', '256', 'type mgt subtype probe-req', '-w', '-'), stdout=sub.PIPE)
+			o = sub.Popen(('tcpdump', '-i', config['general']['mon_if'], '-U', '-s', config['general']['cap_size'], 'type mgt subtype probe-req', '-w', '-'), stdout=sub.PIPE)
 			l = sub.Popen(('tee', config['general']['dumpfile']), stdin=o.stdout, stdout=sub.PIPE)
 			p = sub.Popen(('tcpdump', '-l', '-e', '-r', '-'), stdin=l.stdout, stdout=sub.PIPE)
 		else:
-			p = sub.Popen(('tcpdump', '-i', config['general']['mon_if'], '-l', '-e', '-s', '256', 'type mgt subtype probe-req'), stdout=sub.PIPE)
+			p = sub.Popen(('tcpdump', '-i', config['general']['mon_if'], '-l', '-e', '-s', config['general']['cap_size'], 'type mgt subtype probe-req'), stdout=sub.PIPE)
 	db = db_handler(config['db_conf'])
 
 	pattern_freq = re.compile("((\d{4}) (M|G)hz)", re.IGNORECASE)
