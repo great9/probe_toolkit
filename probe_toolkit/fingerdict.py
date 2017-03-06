@@ -1,17 +1,6 @@
 #!/usr/bin/python
-# Sources:
-#	https://docs.python.org/2/library/struct.html
-#	https://github.com/aircrack-ng/aircrack-ng/blob/master/src/pcap.h
-#	https://stackoverflow.com/questions/8815592/convert-bytes-to-bits-in-python
-#	https://www.technologyuk.net/telecommunications/networks/wireless-networks.shtml
-#	Wireshark itself.
-import struct
-from bitarray import bitarray
-import binascii
-import string
-import random
 import hashlib
-import sys
+import utils
 
 class fingerdict(object):
 	def __init__(self):
@@ -31,29 +20,6 @@ class fingerdict(object):
 					fingerprint_hash smallint,
 					FOREIGN KEY (src) REFERENCES probe_id(src)
 				);"""
-
-		"""args = sys.argv
-		if args[1] != "":
-			pcap_file = args[1]
-		else:
-			print "Specify a valid pcap file as the first argument"
-			sys.exit()
-		if args[2] != "":
-			fp_file = args[2]
-		else:
-			print "Specify a valid output file as the second argument"
-			sys.exit()
-		set_label = False
-		if len(args) > 3:# need to check if actual mac addr
-			src_match = args[3]
-			new_label = args[4]
-			set_label = True"""
-
-	def char_to_hex(self,char):
-		buf = ''
-		for x in char:
-			buf += hex(ord(x))[2:].rjust(2,'0')
-		return buf
 
 	def dump_fingerprints(self,filename):
 		buf = "fingerprints = {\n"
@@ -99,16 +65,13 @@ class fingerdict(object):
 		oui = source_addr.strip(':')
 		oui = oui[:6]
 		for tag_id, tag in tags.iteritems():
-			if(str(tag_id[6:]) != '0'):
-				buf.append([str(tag_id[6:]),self.char_to_hex(str(tag['val']))])
+			if(str(tag_id[6:]) != '0'): # we do not want the ssid to be added.
+				buf.append([str(tag_id[6:]),char_to_hex(str(tag['val']))])
 				tags_string += str(tag_id[6:])
 				tags_string += "|"
-				tags_string += self.char_to_hex(str(tag['val']))
+				tags_string += char_to_hex(str(tag['val']))
 		_hash = hashlib.md5()
 		_hash.update(tags_string)
-		"""
-			Remove SSID, else no uniq
-		"""
 		tags_hash = str(_hash.hexdigest())
 		if tags_hash not in self.fingerprints:
 			self.fingerprints.update( { tags_hash : [self.default_label,[oui],buf] } )
@@ -117,4 +80,3 @@ class fingerdict(object):
 			self.fingerprints[tags_hash][1].append(oui)
 			# New OUI to fingerprint
 		return self.fingerprints[tags_hash][0], tags_hash
-

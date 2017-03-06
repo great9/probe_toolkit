@@ -1,13 +1,14 @@
 import struct
-from bitarray import bitarray
-import binascii
-import string
-import random
-import hashlib
-import sys
-
+import utils
 """
- TCPDump pcap (802.11 probe-req) unpacker
+	Sources
+	https://docs.python.org/2/library/struct.html
+	https://github.com/aircrack-ng/aircrack-ng/blob/master/src/pcap.h
+	https://stackoverflow.com/questions/8815592/convert-bytes-to-bits-in-python
+	https://www.technologyuk.net/telecommunications/networks/wireless-networks.shtml
+	Wireshark itself.
+
+TCPDump pcap (802.11 probe-req) unpacker
 """
 
 class pkt_handler(object):
@@ -53,7 +54,7 @@ class pkt_handler(object):
 				self.counter += 1
 				self.header = [0,0,0,0] # reset header, closing this packet
 			else:
-				#print "breaking, not eboighg dddata"
+				#print "breaking, not enough data"
 				break
 
 	def add_to_buffer(self,data):
@@ -75,7 +76,6 @@ class pkt_handler(object):
 			radiotap, present_flags = self.read_radiotap_header(payload[0:8])
 			payload_offset = radiotap[2]
 			radiotap = self.read_radiotap(payload[8:(radiotap[2])],present_flags)
-			#print radiotap
 		except:
 			print "Guessing PCAP file is corrupted, breaking."
 			print "  PS: This does not mean nothing is done."
@@ -146,34 +146,13 @@ class pkt_handler(object):
 					buf = uc + buf
 			return buf
 
-	def uchar_to_bits(self,uchar):
-		if isinstance(uchar, int):
-			bits = bin(uchar)[2:]
-		elif len(uchar)==1:
-			bits = bin(ord(uchar))[2:] 	# cause the first two are 0b
-		for x in range(len(bits),8):		# 1 uchar should return 8 bits
-			bits = '0{}'.format(bits)
-		return bits
-
-	#def extract_bits(bits,lbits):
-	#	extracted = bits[0:lbits]
-	#	leftover = bits[lbits:]
-	#	return leftover, extracted
-	#
-	def reverse_bits(self,bits):
-		out = ''
-		length = len(bits) -1
-		for x in range(0,length+1):
-			out += bits[(length-x)]
-		return out
-
 	def read_frame_ctrl(self,data):
 		fc = struct.unpack("2B", data)
 
 		"""	2bits	protocol version
 			2bits	type
 			4bits	subtype"""
-		bits1 = self.uchar_to_bits(fc[0])
+		bits1 = uchar_to_bits(fc[0])
 
 		"""	1bit	to ds
 			1bit	from ds
@@ -183,7 +162,7 @@ class pkt_handler(object):
 			1bit	more data
 			1bit	WEP
 			1bit	other"""
-		bits2 = self.uchar_to_bits(fc[1])
+		bits2 = uchar_to_bits(fc[1])
 
 		fc = {	'proto_v'	: int(bits1[6:8],2),
 			'type'		: int(bits1[4:6],2),
@@ -201,18 +180,12 @@ class pkt_handler(object):
 
 	def read_probe_request_frame(self,data):
 		probe_request_frame = {	'duration'		: struct.unpack("h", data[0:2]),
-					'destination_addr'	: self.char_to_hex(struct.unpack("cccccc", data[2:8])),
-					'source_addr'		: self.char_to_hex(struct.unpack("cccccc", data[8:14])),
-					'bssid'			: self.char_to_hex(struct.unpack("cccccc", data[14:20])),
+					'destination_addr'	: char_to_hex(struct.unpack("cccccc", data[2:8])),
+					'source_addr'		: char_to_hex(struct.unpack("cccccc", data[8:14])),
+					'bssid'			: char_to_hex(struct.unpack("cccccc", data[14:20])),
 					'mask'			: struct.unpack("2B", data[20:22]),
 					}
 		return probe_request_frame
-
-	def char_to_hex(self,char):
-		buf = ''
-		for x in char:
-			buf += hex(ord(x))[2:].rjust(2,'0')
-		return buf
 
 	def read_wireless_mgt_frame(self,data):
 		offset = 0

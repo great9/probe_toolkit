@@ -71,15 +71,14 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 			#p = sub.Popen(('tcpdump', '-l', '-e', '-r', '-'), stdin=l.stdout, stdout=sub.PIPE)
 		else:
 			p = sub.Popen(('tcpdump', '-i', config['general']['mon_if'], '-l', '-e', '-s', config['general']['cap_size'], 'type mgt subtype probe-req'), stdout=sub.PIPE)
-	#db = db_handler(config['db_conf'])"""
-	p = sub.Popen(('tcpdump', '-i', config['general']['mon_if'], '-l', '-s', config['general']['cap_size'], 'type mgt subtype probe-req', '-w', '-'), stdout=sub.PIPE)
-	#p = sub.Popen(('tee', 'debug.pcap'), stdin=o.stdout, stdout=sub.PIPE)
+	"""
+	p = sub.Popen(('tcpdump', '-i', config['general']['mon_if'], '-l', '-s', config['general']['cap_size'], 'type mgt subtype probe-req', '-w', '-'), bufsize=1, stdout=sub.PIPE)
 
 	db = db_handler(config['db_conf'])
 	pkt = pkt_handler()
 	if config['general']['fingerdict'] == True:
 		fd = fingerdict()
-		fd.read_fingerprints_dump('dumpp.py')
+		fd.read_fingerprints_dump('fingerprints_dict.py')
 
 	try:
 		previous = ""
@@ -185,9 +184,8 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 					db.insert_probe_log_signal(_datetime,_src,_signal)
 				out.output(level,"{}  {}   {}     {}       {}  {}  {}  {} Mb/s  {}  {}".format(_freq,_std,_ant,_signal,_bssid,_dst,_src,_rate,_essid.ljust(32),label),_datetime)
 				previous = (_datetime+""+_src+""+_signal)
-
 	except KeyboardInterrupt:
-		fd.dump_fingerprints('dumpp.py')
+		fd.dump_fingerprints('fingerprints_dict.py')
 
 		if config['general']['use_sudo']:
 			os.system("sudo kill {}".format(p.pid))
