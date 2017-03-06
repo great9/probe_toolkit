@@ -8,7 +8,7 @@ from probe_toolkit.db_handler import db_handler
 from probe_toolkit.output_handler import output_handler
 from probe_toolkit.pkt_handler import pkt_handler
 from probe_toolkit.fingerdict import fingerdict
-import utils
+from probe_toolkit import utils
 
 def set_match_value(value, match_id = 0, default = "NOT_SET"):
 		if value:
@@ -70,7 +70,7 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 		else:
 			p = sub.Popen(('tcpdump', '-i', config['general']['mon_if'], '-l', '-e', '-s', config['general']['cap_size'], 'type mgt subtype probe-req'), stdout=sub.PIPE)
 	"""
-	p = sub.Popen(('tcpdump', '-i', config['general']['mon_if'], '-l', '-s', config['general']['cap_size'], 'type mgt subtype probe-req', '-w', '-'), bufsize=1, stdout=sub.PIPE)
+	p = sub.Popen(('sudo', 'tcpdump', '-i', config['general']['mon_if'], '-l', '-s', config['general']['cap_size'], 'type mgt subtype probe-req', '-w', '-'), bufsize=1, stdout=sub.PIPE)
 
 	db = db_handler(config['db_conf'])
 	pkt = pkt_handler()
@@ -140,7 +140,7 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 
 				_src = utils.fancy_hex(packet[2]['source_addr'])
 				_dst = utils.fancy_hex(packet[2]['destination_addr'])
-				_bssid = fancy_hex(packet[2]['bssid'])
+				_bssid = utils.fancy_hex(packet[2]['bssid'])
 				try:# got a index error on _rate
 					_signal = str(packet[1][26][1][0])
 					_freq = packet[1][28][1][0]
