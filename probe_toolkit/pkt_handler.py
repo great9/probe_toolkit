@@ -137,22 +137,13 @@ class pkt_handler(object):
 	def read_payload(self,data,lent):
 		return data[self.offset:(self.offset+lent)]
 
-	def uchar_tuple_to_bits(self,utuple):
-		if isinstance(utuple, tuple):
-			buf = ''
-			for uc in utuple:
-				uc = self.uchar_to_bits(uc)
-				if uc != None:
-					buf = uc + buf
-			return buf
-
 	def read_frame_ctrl(self,data):
 		fc = struct.unpack("2B", data)
 
 		"""	2bits	protocol version
 			2bits	type
 			4bits	subtype"""
-		bits1 = uchar_to_bits(fc[0])
+		bits1 = utils.uchar_to_bits(fc[0])
 
 		"""	1bit	to ds
 			1bit	from ds
@@ -162,7 +153,7 @@ class pkt_handler(object):
 			1bit	more data
 			1bit	WEP
 			1bit	other"""
-		bits2 = uchar_to_bits(fc[1])
+		bits2 = utils.uchar_to_bits(fc[1])
 
 		fc = {	'proto_v'	: int(bits1[6:8],2),
 			'type'		: int(bits1[4:6],2),
@@ -180,9 +171,9 @@ class pkt_handler(object):
 
 	def read_probe_request_frame(self,data):
 		probe_request_frame = {	'duration'		: struct.unpack("h", data[0:2]),
-					'destination_addr'	: char_to_hex(struct.unpack("cccccc", data[2:8])),
-					'source_addr'		: char_to_hex(struct.unpack("cccccc", data[8:14])),
-					'bssid'			: char_to_hex(struct.unpack("cccccc", data[14:20])),
+					'destination_addr'	: utils.char_to_hex(struct.unpack("cccccc", data[2:8])),
+					'source_addr'		: utils.char_to_hex(struct.unpack("cccccc", data[8:14])),
+					'bssid'			: utils.char_to_hex(struct.unpack("cccccc", data[14:20])),
 					'mask'			: struct.unpack("2B", data[20:22]),
 					}
 		return probe_request_frame
@@ -208,7 +199,7 @@ class pkt_handler(object):
 		"""
 		pcap_radiotap_hdr = struct.unpack("B B H 4c", data)
 
-		present_flags = self.uchar_tuple_to_bits(pcap_radiotap_hdr[3:7])
+		present_flags = utils.uchar_tuple_to_bits(pcap_radiotap_hdr[3:7])
 
 		"""	0	1	EXT
 			1	1	Vendor NS next

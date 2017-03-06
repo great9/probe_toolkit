@@ -19,3 +19,12 @@ def char_to_hex(self,char):
 	for x in char:
 		buf += hex(ord(x))[2:].rjust(2,'0')
 	return buf
+
+def uchar_tuple_to_bits(utuple):
+	if isinstance(utuple, tuple):
+		buf = ''
+		for uc in utuple:
+			uc = self.uchar_to_bits(uc)
+			if uc != None:
+				buf = uc + buf
+		return buf

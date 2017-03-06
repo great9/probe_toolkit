@@ -66,10 +66,10 @@ class fingerdict(object):
 		oui = oui[:6]
 		for tag_id, tag in tags.iteritems():
 			if(str(tag_id[6:]) != '0'): # we do not want the ssid to be added.
-				buf.append([str(tag_id[6:]),char_to_hex(str(tag['val']))])
+				buf.append([str(tag_id[6:]),utils.char_to_hex(str(tag['val']))])
 				tags_string += str(tag_id[6:])
 				tags_string += "|"
-				tags_string += char_to_hex(str(tag['val']))
+				tags_string += utils.char_to_hex(str(tag['val']))
 		_hash = hashlib.md5()
 		_hash.update(tags_string)
 		tags_hash = str(_hash.hexdigest())
