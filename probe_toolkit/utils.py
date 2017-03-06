@@ -14,7 +14,7 @@ def reverse_bits(bits):
 		out += bits[(length-x)]
 	return out
 
-def char_to_hex(self,char):
+def char_to_hex(char):
 	buf = ''
 	for x in char:
 		buf += hex(ord(x))[2:].rjust(2,'0')
@@ -24,7 +24,7 @@ def uchar_tuple_to_bits(utuple):
 	if isinstance(utuple, tuple):
 		buf = ''
 		for uc in utuple:
-			uc = self.uchar_to_bits(uc)
+			uc = uchar_to_bits(uc)
 			if uc != None:
 				buf = uc + buf
 		return buf
