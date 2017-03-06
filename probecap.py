@@ -8,6 +8,7 @@ from probe_toolkit.db_handler import db_handler
 from probe_toolkit.output_handler import output_handler
 from probe_toolkit.pkt_handler import pkt_handler
 from probe_toolkit.fingerdict import fingerdict
+import utils
 
 def set_match_value(value, match_id = 0, default = "NOT_SET"):
 		if value:
@@ -18,9 +19,6 @@ def set_match_value(value, match_id = 0, default = "NOT_SET"):
 
 def main():
 	print_buffer("probe_toolkit")
-
-def fancy_hex(_hex):
-	return ":".join(_hex[seq:seq+2] for seq in range(0,12,2))
 
 if __name__ == "__main__":
 	config = {}
@@ -140,15 +138,15 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 					if tag_id[6:] == '0':
 						_essid = tag['val']
 
-				_src = fancy_hex(packet[2]['source_addr'])
-				_dst = fancy_hex(packet[2]['destination_addr'])
+				_src = utils.fancy_hex(packet[2]['source_addr'])
+				_dst = utils.fancy_hex(packet[2]['destination_addr'])
 				_bssid = fancy_hex(packet[2]['bssid'])
 				try:# got a index error on _rate
 					_signal = str(packet[1][26][1][0])
 					_freq = packet[1][28][1][0]
 					_rate = packet[1][29][1][0] * 0.5# multiplier 512kbps
 					_ant = packet[1][20][1][0]
-					_std = pkt.char_to_hex(packet[1][28][1][1])
+					_std = utils.char_to_hex(packet[1][28][1][1])
 				except IndexError:
 					out.output("ERROR",IndexError)
 					out.output("ERROR",packet)

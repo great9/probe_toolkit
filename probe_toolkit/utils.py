@@ -28,3 +28,6 @@ def uchar_tuple_to_bits(utuple):
 			if uc != None:
 				buf = uc + buf
 		return buf
+
+def fancy_hex(_hex):
+	return ":".join(_hex[seq:seq+2] for seq in range(0,12,2))
