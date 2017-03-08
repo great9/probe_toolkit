@@ -44,7 +44,7 @@ class pkt_handler(object):
 				self.header = self.read_rec_packet_header()
 				if self.header == False: # if it fails somehow
 					self.header = [0,0,0,0]
-					print "breaking, header is false"
+					#print "breaking, header is false"
 					break
 				#print "New packet, header: {}".format(self.header)
 
@@ -70,15 +70,18 @@ class pkt_handler(object):
 
 		if self.header[3] > self.header[2] and self.skip_truncated == True:
 			#if _DEBUG_: print "Truncated, skipping."
-			print "Truncated, skipping"
+			#print "Truncated, skipping"
+			#print self.header[3]
+			#print self.header[2]
+			#print utils.char_to_hex(payload)
 			return False
 		try:
 			radiotap, present_flags = self.read_radiotap_header(payload[0:8])
 			payload_offset = radiotap[2]
 			radiotap = self.read_radiotap(payload[8:(radiotap[2])],present_flags)
 		except:
-			print "Guessing PCAP file is corrupted, breaking."
-			print "  PS: This does not mean nothing is done."
+			#print "Guessing PCAP file is corrupted, breaking."
+			#print "  PS: This does not mean nothing is done."
 			return False
 
 		if payload_offset <= len(payload):
@@ -89,7 +92,7 @@ class pkt_handler(object):
 				payload_offset += 24# for the probe request frame
 				tags = self.read_wireless_mgt_frame(payload[payload_offset:])
 		else:
-			print "Something is wrong..."
+			#print "Something is wrong..."
 			return False
 
 		self.packets.append([self.header,radiotap,probe_request_frame,tags])
@@ -185,7 +188,7 @@ class pkt_handler(object):
 		while offset+2 < len(data): # the +2 is for future values, if < than that there is no need to read.
 			tag_num, tag_len, tag_val = self.read_80211_frame_tags(data,offset)
 			offset += tag_len+2
-			str_num = "{}{}".format(str(counter).rjust(6,'0'),str(tag_num))
+			str_num = "{}{}".format(str(tag_num),str(counter).rjust(6,'0'))
 			tags.update( { str_num : { 'len' : tag_len, 'val' : tag_val } } )
 			counter += 1
 		return tags

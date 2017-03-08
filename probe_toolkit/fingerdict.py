@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import hashlib
 import utils
+import operator
 
 class fingerdict(object):
 	def __init__(self):
@@ -58,18 +59,30 @@ class fingerdict(object):
 
 	def update_label(self,tags_hash,_label):
 		self.fingerprints[tags_hash][0] = _label
-
+		
 	def update_finterprints(self,tags,source_addr):
 		buf = list()
 		tags_string = ""
 		oui = source_addr.strip(':')
 		oui = oui[:6]
-		for tag_id, tag in tags.iteritems():
-			if(str(tag_id[6:]) != '0'): # we do not want the ssid to be added.
-				buf.append([str(tag_id[6:]),utils.char_to_hex(str(tag['val']))])
-				tags_string += str(tag_id[6:])
+		#tags = sorted(tags.items())
+		#print tags
+		#print ""
+		#print sorted(tags.iteritems(), key=lambda x: x[:6])
+		#print "\n"
+		#tags = sorted(tags.iteritems(), key=lambda (tag_id,tag): (tag['val'],tag_id))
+		#for tag_id, tag in sorted(tags.items(), key=lambda e: e[1][2]):
+		for tag_id, tag in sorted(tags.items(), key=lambda (tag_id,tag): (tag['val'],tag_id)):
+			tag_id = str(tag_id)[:len(str(tag_id))-6]
+			#print utils.char_to_hex(tag['val'])
+			#print ""
+			if(tag_id != '0') and tag_id != '3': # we do not want the ssid and current channel to be added.
+				buf.append([tag_id,utils.char_to_hex(str(tag['val']))])
+				tags_string += tag_id
 				tags_string += "|"
 				tags_string += utils.char_to_hex(str(tag['val']))
+				tags_string += "|"
+		#print tags_string
 		_hash = hashlib.md5()
 		_hash.update(tags_string)
 		tags_hash = str(_hash.hexdigest())

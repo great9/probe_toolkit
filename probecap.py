@@ -8,7 +8,11 @@ from probe_toolkit.db_handler import db_handler
 from probe_toolkit.output_handler import output_handler
 from probe_toolkit.pkt_handler import pkt_handler
 from probe_toolkit.fingerdict import fingerdict
+from probe_toolkit.periodical import periodical
 from probe_toolkit import utils
+
+from fcntl import fcntl, F_GETFL, F_SETFL
+from os import O_NONBLOCK, read
 
 def set_match_value(value, match_id = 0, default = "NOT_SET"):
 		if value:
@@ -70,19 +74,31 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 		else:
 			p = sub.Popen(('tcpdump', '-i', config['general']['mon_if'], '-l', '-e', '-s', config['general']['cap_size'], 'type mgt subtype probe-req'), stdout=sub.PIPE)
 	"""
-	p = sub.Popen(('sudo', 'tcpdump', '-i', config['general']['mon_if'], '-l', '-s', config['general']['cap_size'], 'type mgt subtype probe-req', '-w', '-'), bufsize=1, stdout=sub.PIPE)
+	p = sub.Popen(('sudo', 'tcpdump', '-i', config['general']['mon_if'], '-U', '-s', config['general']['cap_size'], 'type mgt subtype probe-req', '-w', '-'), stdout=sub.PIPE)
+	#fcntl_flags = fcntl(p.stdout, F_GETFL)
+	#fcntl(p.stdout, F_SETFL, fcntl_flags | O_NONBLOCK)
+
 
 	db = db_handler(config['db_conf'])
 	pkt = pkt_handler()
 	if config['general']['fingerdict'] == True:
 		fd = fingerdict()
 		fd.read_fingerprints_dump('fingerprints_dict.py')
-
+	count = 0
 	try:
 		previous = ""
-		count = 0
-		for row in iter(p.stdout.readline, b''):
-			pkt.new_data(row)
+		
+		timer_output = periodical(0.5)
+		
+		#for row in iter(p.stdout.readline, b''):
+		while True:
+			try:
+				data = read(p.stdout.fileno(),32)
+				pkt.new_data(data)
+				time.sleep(0.1)
+			except:
+				time.sleep(0.1)
+				continue
 
 			for packet in pkt.packets:
 				"""
@@ -133,10 +149,10 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 				"""
 
 				_datetime = datetime.datetime.fromtimestamp(int(packet[0][0])).strftime('%Y-%m-%d %H:%M:%S')
-				_essid = ""
-				for tag_id, tag in packet[3].iteritems():
-					if tag_id[6:] == '0':
-						_essid = tag['val']
+				_essid = packet[3]['0000000']['val']
+				#for tag_id, tag in packet[3].iteritems():
+				#	if tag_id[6:] == '0':
+				#		_essid = tag['val']
 
 				_src = utils.fancy_hex(packet[2]['source_addr'])
 				_dst = utils.fancy_hex(packet[2]['destination_addr'])
@@ -158,8 +174,8 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 					label, tags_hash = fd.update_finterprints(packet[3],packet[2]['source_addr'])
 
 					set_label = True
-					match_src = '12:34:56:78:90:FF'
-					new_label = 'Example label'
+					match_src = '12:34:56:78:9A:BC'
+					new_label = 'Test Label'
 
 					if set_label == True and match_src == _src:
 						fd.update_label(tags_hash,new_label)
@@ -180,10 +196,17 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 					out.output("DEBUG","Skipped duplicate input: {}".format(previous))
 				else:
 					db.insert_probe_log_signal(_datetime,_src,_signal)
+				if db.update_probe_log_fingerdict_last_seen(_src,tags_hash,_datetime) == False: # if this failes then; insert ..
+					db.insert_probe_log_fingerdict(_src,_datetime,_datetime,tags_hash)
 				out.output(level,"{}  {}   {}     {}       {}  {}  {}  {} Mb/s  {}  {}".format(_freq,_std,_ant,_signal,_bssid,_dst,_src,_rate,_essid.ljust(32),label),_datetime)
 				previous = (_datetime+""+_src+""+_signal)
+				count += 1
+			if timer_output.check():
+				out.print_buffer()
 	except KeyboardInterrupt:
+		# TODO periodical function
 		fd.dump_fingerprints('fingerprints_dict.py')
+		print "Packet_count: {}".format(count)
 
 		if config['general']['use_sudo']:
 			os.system("sudo kill {}".format(p.pid))
