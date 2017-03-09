@@ -96,11 +96,11 @@ class db_handler(object):
 				'probe_log_ap' :
 				"""CREATE TABLE probe_log_ap(
 						src CHARACTER,
-						essid NATIVE CHARACTER,
-						bssid CHARACTER,
 						dst CHARACTER,
+						bssid CHARACTER,
 						first_seen DATETIME,
 						last_seen DATETIME,
+						essid NATIVE CHARACTER,
 						FOREIGN KEY(src) REFERENCES probe_id(src)
 					);""",
 					'probe_log_signal' :
@@ -273,11 +273,12 @@ class client(db_handler):
 
 	def get_fingerprint_hash(self,src):
 		cur = self.con.cursor()
-		query = "SELECT fingerprint_hash FROM probe_log_fingerdict WHERE src=%s"
+		query = "SELECT fingerprint_hash FROM probe_log_fingerdict WHERE src=%s LIMIT 1;"
 		try:
 			#print self.query(query)
 			cur.execute(self.query(query), (src,))
 			#return cur.fetchall()[0]
-			return cur.fetchone()
+			#print 
+			return str(cur.fetchone()[0]).replace('-','')
 		except:
 			return ""

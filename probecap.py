@@ -74,9 +74,9 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 		else:
 			p = sub.Popen(('tcpdump', '-i', config['general']['mon_if'], '-l', '-e', '-s', config['general']['cap_size'], 'type mgt subtype probe-req'), stdout=sub.PIPE)
 	"""
-	p = sub.Popen(('sudo', 'tcpdump', '-i', config['general']['mon_if'], '-U', '-s', config['general']['cap_size'], 'type mgt subtype probe-req', '-w', '-'), stdout=sub.PIPE)
-	#fcntl_flags = fcntl(p.stdout, F_GETFL)
-	#fcntl(p.stdout, F_SETFL, fcntl_flags | O_NONBLOCK)
+	p = sub.Popen(('sudo', 'tcpdump', '-i', config['general']['mon_if'], '-U', '-s', config['general']['cap_size'], 'type mgt subtype probe-req', '-w', '-'), bufsize=1 ,stdout=sub.PIPE)
+	fcntl_flags = fcntl(p.stdout, F_GETFL)
+	fcntl(p.stdout, F_SETFL, fcntl_flags | O_NONBLOCK)
 
 
 	db = db_handler(config['db_conf'])
@@ -88,7 +88,8 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 	try:
 		previous = ""
 		
-		timer_output = periodical(0.5)
+		timer_output = periodical(1)
+		timer_dumpprints = periodical(60)
 		
 		#for row in iter(p.stdout.readline, b''):
 		while True:
@@ -203,6 +204,8 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 				count += 1
 			if timer_output.check():
 				out.print_buffer()
+			if timer_dumpprints.check():
+				fd.dump_fingerprints('fingerprints_dict.py')
 	except KeyboardInterrupt:
 		# TODO periodical function
 		fd.dump_fingerprints('fingerprints_dict.py')

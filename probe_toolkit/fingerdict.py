@@ -8,7 +8,7 @@ class fingerdict(object):
 		# Only save fingerprint if a minimum of x devices share the same print.
 		# This will also filter out device unique fingerprints, like for example
 		# Nintendo DS will send probe requests with personal data.
-		self.min_dev_count = 3
+		self.min_dev_count = 0# set to 0 for debug, set to 3 or higher for normal
 		self.default_label = "_UNKNOWN_"
 		self.count = 0
 
@@ -65,13 +65,6 @@ class fingerdict(object):
 		tags_string = ""
 		oui = source_addr.strip(':')
 		oui = oui[:6]
-		#tags = sorted(tags.items())
-		#print tags
-		#print ""
-		#print sorted(tags.iteritems(), key=lambda x: x[:6])
-		#print "\n"
-		#tags = sorted(tags.iteritems(), key=lambda (tag_id,tag): (tag['val'],tag_id))
-		#for tag_id, tag in sorted(tags.items(), key=lambda e: e[1][2]):
 		for tag_id, tag in sorted(tags.items(), key=lambda (tag_id,tag): (tag['val'],tag_id)):
 			tag_id = str(tag_id)[:len(str(tag_id))-6]
 			#print utils.char_to_hex(tag['val'])
