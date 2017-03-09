@@ -1,7 +1,6 @@
 #!/usr/bin/python
 import hashlib
 import utils
-import operator
 
 class fingerdict(object):
 	def __init__(self):
@@ -59,23 +58,41 @@ class fingerdict(object):
 
 	def update_label(self,tags_hash,_label):
 		self.fingerprints[tags_hash][0] = _label
-		
+
+	def create_tags_string(self,tags, buf=list()):
+		tags_string = ""
+		# TODO make this better
+		if isinstance(tags, dict): # dict from pkt_handler
+			for tag_id, tag in sorted(tags.items(), key=lambda (tag_id,tag): (tag['val'],tag_id)):
+				tag_id = str(tag_id)[:len(str(tag_id))-6]
+				if(tag_id != '0') and tag_id != '3': # we do not want the ssid and current channel to be added.
+					if tag_id == '221' and tag[1][:6] == '0050f2': # Microsoft
+						tag[1] = tag[1][:12]
+					buf.append([tag_id,utils.char_to_hex(str(tag['val']))])
+					tags_string += tag_id
+					tags_string += "|"
+					tags_string += utils.char_to_hex(str(tag['val']))
+					tags_string += "|"
+		elif isinstance(tags, list): # list from fingerdict file
+			for tag in sorted(tags, key=lambda tag: tag[1]):
+				tag_id = str(tag[0])
+				if(tag_id != '0') and tag_id != '3': # we do not want the ssid and current channel to be added.
+					if tag_id == '221' and tag[1][:6] == '0050f2': # Microsoft
+						tag[1] = tag[1][:12]
+					buf.append([tag_id,tag[1]])
+					tags_string += tag_id
+					tags_string += "|"
+					tags_string += tag[1]
+					tags_string += "|"
+		if len(buf) > 0:
+			return tags_string, buf
+		return tags_string
+
 	def update_finterprints(self,tags,source_addr):
 		buf = list()
-		tags_string = ""
 		oui = source_addr.strip(':')
 		oui = oui[:6]
-		for tag_id, tag in sorted(tags.items(), key=lambda (tag_id,tag): (tag['val'],tag_id)):
-			tag_id = str(tag_id)[:len(str(tag_id))-6]
-			#print utils.char_to_hex(tag['val'])
-			#print ""
-			if(tag_id != '0') and tag_id != '3': # we do not want the ssid and current channel to be added.
-				buf.append([tag_id,utils.char_to_hex(str(tag['val']))])
-				tags_string += tag_id
-				tags_string += "|"
-				tags_string += utils.char_to_hex(str(tag['val']))
-				tags_string += "|"
-		#print tags_string
+		tags_string, buf = self.create_tags_string(tags, buf)
 		_hash = hashlib.md5()
 		_hash.update(tags_string)
 		tags_hash = str(_hash.hexdigest())
@@ -85,4 +102,4 @@ class fingerdict(object):
 		elif oui not in self.fingerprints[tags_hash][1]:
 			self.fingerprints[tags_hash][1].append(oui)
 			# New OUI to fingerprint
-		return self.fingerprints[tags_hash][0], tags_hash
+		return self.fingerprints[tags_hash][0], tags_hash, tags_string

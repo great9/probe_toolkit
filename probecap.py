@@ -88,8 +88,8 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 	try:
 		previous = ""
 		
-		timer_output = periodical(1)
-		timer_dumpprints = periodical(60)
+		timer_output = periodical(1)# every second
+		timer_dumpprints = periodical(60*10)# every 10 minutes
 		
 		#for row in iter(p.stdout.readline, b''):
 		while True:
@@ -172,7 +172,7 @@ Please be sure you have a valid probe_toolkit.conf in this dir."""
 				label = ""
 				if config['general']['fingerdict'] == True:
 					# Need to make this threaded for faster results.
-					label, tags_hash = fd.update_finterprints(packet[3],packet[2]['source_addr'])
+					label, tags_hash, tags_string = fd.update_finterprints(packet[3],packet[2]['source_addr'])
 
 					set_label = True
 					match_src = '12:34:56:78:9A:BC'

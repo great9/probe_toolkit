@@ -15,7 +15,7 @@ with open('probes.dump_', mode='rb') as file: # b is important -> binary
 
 	pkt.new_data(fileContent)
 	for packet in pkt.packets:
-		label, tags_hash = fd.update_finterprints(packet[3],packet[2]['source_addr'])
+		label, tags_hash, tags_string = fd.update_finterprints(packet[3],packet[2]['source_addr'])
 		set_label = True
 		match_src = '12:34:56:78:90:FF'
 		new_label = 'Example label'
