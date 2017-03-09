@@ -237,7 +237,7 @@ class output_handler(object):
 		if seconds < 2:
 			return "just now.".ljust(19)
 		minutes = _time_ago.seconds / 60
-		if minutes > 0:
+		if minutes  - (hours * 3600) > 0:
 			time_ago_str += "%02dm "%minutes
 		if seconds - (minutes * 60) > 0:
 			time_ago_str += "%02ds "%(seconds - (minutes * 60))

@@ -66,8 +66,11 @@ class fingerdict(object):
 			for tag_id, tag in sorted(tags.items(), key=lambda (tag_id,tag): (tag['val'],tag_id)):
 				tag_id = str(tag_id)[:len(str(tag_id))-6]
 				if(tag_id != '0') and tag_id != '3': # we do not want the ssid and current channel to be added.
-					if tag_id == '221' and tag[1][:6] == '0050f2': # Microsoft
-						tag[1] = tag[1][:12]
+					try:
+						if tag_id == '221' and tag[1][:6] == '0050f2': # Microsoft
+							tag[1] = tag[1][:12]
+					except:
+						pass
 					buf.append([tag_id,utils.char_to_hex(str(tag['val']))])
 					tags_string += tag_id
 					tags_string += "|"
@@ -77,8 +80,11 @@ class fingerdict(object):
 			for tag in sorted(tags, key=lambda tag: tag[1]):
 				tag_id = str(tag[0])
 				if(tag_id != '0') and tag_id != '3': # we do not want the ssid and current channel to be added.
-					if tag_id == '221' and tag[1][:6] == '0050f2': # Microsoft
-						tag[1] = tag[1][:12]
+					try:
+						if tag_id == '221' and tag[1][:6] == '0050f2': # Microsoft
+							tag[1] = tag[1][:12]
+					except:
+						pass
 					buf.append([tag_id,tag[1]])
 					tags_string += tag_id
 					tags_string += "|"
