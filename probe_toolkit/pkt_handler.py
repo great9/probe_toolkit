@@ -37,14 +37,14 @@ class pkt_handler(object):
 	def new_data(self,data):#hook
 		self.add_to_buffer(data)
 		if self.read_header == False:
-			print self.read_global_header()
+			self.read_global_header()
 			self.read_header = True
 		while True:
 			if len(self.buffer) >= 16 and self.header == [0,0,0,0]: # we can read the header, and it needs to be read.
 				self.header = self.read_rec_packet_header()
 				if self.header == False: # if it fails somehow
 					self.header = [0,0,0,0]
-					#print "breaking, header is false"
+					print "breaking, header is false"
 					break
 				#print "New packet, header: {}".format(self.header)
 
@@ -70,18 +70,18 @@ class pkt_handler(object):
 
 		if self.header[3] > self.header[2] and self.skip_truncated == True:
 			#if _DEBUG_: print "Truncated, skipping."
-			#print "Truncated, skipping"
-			#print self.header[3]
-			#print self.header[2]
-			#print utils.char_to_hex(payload)
+			print "Truncated, skipping"
+			print self.header[3]
+			print self.header[2]
+			print utils.char_to_hex(payload)
 			return False
 		try:
 			radiotap, present_flags = self.read_radiotap_header(payload[0:8])
 			payload_offset = radiotap[2]
 			radiotap = self.read_radiotap(payload[8:(radiotap[2])],present_flags)
 		except:
-			#print "Guessing PCAP file is corrupted, breaking."
-			#print "  PS: This does not mean nothing is done."
+			print "Guessing PCAP file is corrupted, breaking."
+			print "  PS: This does not mean nothing is done."
 			return False
 
 		if payload_offset <= len(payload):
@@ -92,7 +92,7 @@ class pkt_handler(object):
 				payload_offset += 24# for the probe request frame
 				tags = self.read_wireless_mgt_frame(payload[payload_offset:])
 		else:
-			#print "Something is wrong..."
+			print "Something is wrong..."
 			return False
 
 		self.packets.append([self.header,radiotap,probe_request_frame,tags])

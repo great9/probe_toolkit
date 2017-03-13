@@ -3,6 +3,7 @@ import time
 from time import mktime
 import sys
 import re
+from cStringIO import StringIO # to capture stdout in to a buff
 #import os
 
 class output_handler(object):
@@ -10,7 +11,7 @@ class output_handler(object):
 		self.config = config
 		self.height = 0
 		self.width = 0
-		self.header = """probe_toolkit - probecap\n"""
+		self.header = """probe_toolkit - Output Handler\n"""
 		# http://misc.flogisoft.com/bash/tip_colors_and_formatting		
 		self.color = {'RED_BLACK'	: '[41;30m',
 				'RED_WHITE'	: '[41;97m',
@@ -38,6 +39,7 @@ class output_handler(object):
 		if 'input' in config:
 			self.input = config['input']
 		if self.input == True:
+			self.matched_keys = list()
 			global termios
 			import termios
 			global os
@@ -66,7 +68,11 @@ class output_handler(object):
 			termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.term_attr)
 			# end termios
 			self.selected_line = 0
-
+		if 'log_stdout' in config:
+			self.stdout_log = config['log_stdout']
+			self.stdout_capture_buff = StringIO()
+			self.stdout_backup = sys.stdout
+			self.stdout_buff = ""
 		self.clear_screen()
 		self.disable_color = True
 		if 'disable_color' in config:
@@ -102,12 +108,32 @@ class output_handler(object):
 		print ""# new line
 		if self.input:
 			termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.term_attr_backup)
+		if self.stdout_log == True:
+			self.log_stdout()
 		self.log_file.close()
 
 	def clear_screen(self):
 		# use sys.stdout.write so there is no new line.
 		# first clear screen then set cur pos top left
 		sys.stdout.write(chr(27) + "[2J" + chr(27) + "[0;0H")
+
+	def stdout_capture(self):
+		self.stdout_buff += self.stdout_capture_buff.getvalue()
+		sys.stdout = self.stdout_capture_buff = StringIO()
+
+	def stdout_restore(self):
+		sys.stdout = self.stdout_backup
+		self.stdout_buff += self.stdout_capture_buff.getvalue()
+		self.stdout_capture_buff = StringIO()
+		#sys.__stdout__
+
+	def log_stdout(self):
+		for msg in self.stdout_buff.splitlines():
+			if msg != "":
+				msg_datetime = str(datetime.datetime.now())[:19]
+				self.log_file.write(msg_datetime + ",STDOUT," + msg + "\n");
+		self.stdout_buff = ""
+		self.log_file.flush()
 
 	# Need to do this after something changed, example the header size
 	# This will reset the line buffer
@@ -157,19 +183,28 @@ class output_handler(object):
 		self.line_buffer = [line] + self.line_buffer
 
 	def print_header(self):
+		if self.stdout_log == True:
+			self.stdout_restore()
 		header_chunks = self.header.split('\n')
 		self.header_size = len(header_chunks)
 		sys.stdout.write(chr(27) + "[0;0H")			# Go to top left
 		for chunk in header_chunks:
-			print chunk					# erase line + add new
+			sys.stdout.write(chr(27) + "[K")		# erase line
+			print chunk					# add new
 		sys.stdout.write(chr(27) + "[s") 			# save cur pos
+		if self.stdout_log == True:
+			self.stdout_capture()
 
 	def print_buffer(self):
+		if self.stdout_log == True:
+			self.stdout_restore()
 		sys.stdout.write(chr(27) + "[{};0H".format(self.header_size+1))
 		for l in self.line_buffer:
 			if self.time_ago_format:			# if time_ago_format is set True in config
 				l = self.redraw_time_ago(l)		# return time ago string
 			print(chr(27) + "[K" + l) 			# erase line + add new
+		if self.stdout_log == True:
+			self.stdout_capture()
 
 	def set_line_selected(self,line_num):
 		self.selected_line = line_num
@@ -253,6 +288,83 @@ class output_handler(object):
 			keys = os.read(sys.stdin.fileno(),1)
 		return k
 
+	def key_pressed(self,pressed_key):
+		if pressed_key in self.matched_keys:
+			del self.matched_keys[self.matched_keys.index(pressed_key)]
+			return True
+		return False
+
+	def match_keys(self,keys):
+		pressed_keys = list()
+		while keys:
+			up = [27, 91, 65]
+			down = [27, 91, 66]
+			left= [27, 91, 68]
+			right = [27, 91, 67]
+			shift_tab = [27, 91, 90]
+			match = False
+			if len(keys) >= 3:
+				print keys[:3]
+				if keys[:3] == up:
+					pressed_keys.append("up")
+					keys.pop(0)
+					keys.pop(0)
+					keys.pop(0)
+					match = True
+				elif keys[:3] == down:
+					pressed_keys.append("down")
+					keys.pop(0)
+					keys.pop(0)
+					keys.pop(0)
+					match = True
+				elif keys[:3] == left:
+					pressed_keys.append("left")
+					keys.pop(0)
+					keys.pop(0)
+					keys.pop(0)
+					match = True
+				elif keys[:3] == right:
+					pressed_keys.append("right")
+					keys.pop(0)
+					keys.pop(0)
+					keys.pop(0)
+					match = True
+				elif keys[:3] == shift_tab:
+					pressed_keys.append("shift_tab")
+					keys.pop(0)
+					keys.pop(0)
+					keys.pop(0)
+					match = True
+			if len(keys) > 0 and not match:
+				if keys[0] in range(97,122) or keys[0] in range(65,90):
+					pressed_keys.append(chr(keys[0]))
+					keys.pop(0)
+				elif keys[0] == 9:
+					pressed_keys.append("tab")
+					keys.pop(0)
+				elif keys[0] == 27:
+					pressed_keys.append("esc")
+					keys.pop(0)
+				elif keys[0] == 32:
+					pressed_keys.append(" ")
+					keys.pop(0)
+				elif keys[0] == 0:
+					pressed_keys.append("ctrl_space")
+					keys.pop(0)
+				elif keys[0] == 10:
+					pressed_keys.append("return")
+					keys.pop(0)
+				elif keys[0] == 127:
+					pressed_keys.append("backspace")
+					keys.pop(0)
+				elif keys[0] in range(1,26):
+					pressed_keys.append("ctrl_"+chr(keys[0]+64))
+					keys.pop(0)
+				else:
+					pressed_keys.append(chr(keys[0]))
+					keys.pop(0)
+		self.matched_keys = pressed_keys
+
 	def format_msg(self,msg_level,msg,msg_datetime):
 		switch = { 'ERROR'	: self.color['RED_BLACK'],
 			'INFO'		: self.color['GREEN_WHITE'],
@@ -280,7 +392,6 @@ class output_handler(object):
 		if switch[msg_level][1]:
 			msg = self.format_msg(msg_level,msg,msg_datetime)
 			self.update_buffer(msg)
-			#self.print_buffer()
 		self.log_file.flush()
 
 	def do_style(self,string,style):
@@ -336,6 +447,15 @@ class output_handler(object):
 		pattern_ansi = re.compile("(\x1b\[[;0-9]+[a-z])", re.IGNORECASE).sub
 		return pattern_ansi('',string)
 
+class menu(object):
+	def __init__(self,out,width,items=list(),subitems=list()):
+		self.items = items		# list ['name0','name1','name2']
+		self.subitems = subitems	# list [ [patent_id0,name0], [..] ]
+
+class label(object):
+	def __init__(self,width,x,y):
+		self.width = width
+
 class input_field(object):
 	def __init__(self,out,width,x,y):
 		self.width = width
@@ -343,64 +463,85 @@ class input_field(object):
 		self.x = x
 		self.y = y
 		self.out = out
+		self.pos = 0
 		self.input_txt = ""
 		self.last_updated = datetime.datetime.now()
 		self.print_field()
 
 	def print_field(self):
+		if self.out.stdout_log == True:
+			out.stdout_restore()
 		field = self.input_txt
 		if self.selected == True:
 			now = datetime.datetime.now()
+			field_len = len(field)
+			if self.pos > field_len:
+				self.pos = field_len
+			elif self.pos < 0:
+				self.pos = 0
 			if (now - self.last_updated) > datetime.timedelta(seconds=1):
-				field += str(chr(124))
+				field = field[:self.pos] + str(chr(124)) + field[self.pos:]
 				if (now - self.last_updated) > datetime.timedelta(seconds=3):
 					self.last_updated = now
+			else:
+				field = field[:self.pos] + " " + field[self.pos:]
 			field = self.out.do_style(field.ljust(self.width),{'bg':'WHITE','fg':'RED','txt':'BOLD'})
 		else:
 			field = field.ljust(self.width)
 		sys.stdout.write(chr(27) + "[" + str(self.y+self.out.header_size+self.out.height_offset) + ";" + str(self.x+1) + "H" + field)
+		if self.out.stdout_log == True:
+			out.stdout_capture()
 
 	def add_text(self,text):
 		if len(self.input_txt) < self.width-1:# -1 for the blinker
-			self.input_txt += text
+			#self.input_txt += text
+			self.input_txt = self.input_txt[:self.pos] + text + self.input_txt[self.pos:]
+			self.pos += len(text)
 
 	def backspace(self):
 		self.input_txt = self.input_txt[:len(self.input_txt)-1]
 
 class table(object):
 	def __init__(self,panel,columns):
-		self.max_width = panel.width
 		self.width=0
 		self.columns = columns
 		self.panel = panel
 		self.print_column_names = True
-		self.buffer = list()
+		#self.buffer = list()
 		self.col_separator = "  "
+		self.selected_row = 0
 		col_names = ""
 		for name, args in columns.iteritems():
 			self.width += args[0]
+			self.width += len(self.col_separator)
 			col_names += name.ljust(self.columns[name][0]) + self.col_separator 
 		if self.print_column_names == True:
 			self.panel.header = chr(27) + "[1m" + col_names + chr(27) + "[0m"
+		if panel.width == 0:#auto
+			panel.width = self.width
+		self.max_width = panel.width
 
 	def update_column(self,row_num,column_name,data):
 		# TODO check if row_num exists, else create it?
 		# TODO check if data isn't longer than column size, else split into multiple lines?
 		column_offset = 0
-		sep_lenght = len(self.col_separator)
+		#sep_lenght = len(self.col_separator)
 		if column_name in self.columns:
 			column_length = self.columns[column_name][0]
 			for name, length in self.columns.iteritems():
 				if name == column_name:
 					break
 				column_offset += length[0]
-				column_offset += sep_lenght
+				#column_offset += sep_lenght
 		self.panel.update_buffer(data.ljust(column_length),row_num,column_offset)
 		
 	def update_table(self,columns,row_num=-1):
 		buf = ""
 		for name, args in columns.iteritems():
 			buf += str(args[1]).ljust(int(args[0])) + self.col_separator#add value and ljust to column size + add the column separator
+		self.panel.update_buffer(buf,row_num)
+
+	def update_row_style(self,row_num):
 		self.panel.update_buffer(buf,row_num)
 
 class panel(object):
@@ -418,13 +559,14 @@ class panel(object):
 		sys.stdout.write(chr(27) + "[?25l") # hide cursor
 
 		if scroll_buffer_size > 0:
-			#self.scroll_buffer = [""]*scroll_buffer_size
 			self.scroll_buffer = [""] # TODO need to remove the normal buffer and merge with scroll buffer (rm buffer, mv scroll_buffer buffer, and do check if scroll buffer is set then it can override max height.)
 			self.scroll_pos = 0
 			self.scroll_buffer_size = scroll_buffer_size
 			self.scroll_buffer_count = 0
 		self.buffer_count = 0
 		self.buffer = [""]
+		self.selected_line = -1
+		self.print_filter = ""
 		self.reverse_output = False
 
 		self.update_buffer()
@@ -494,10 +636,11 @@ class panel(object):
 				if self.reverse_output == False:
 					self.scroll_buffer += [self.out.fill_str_size(buf,self.width)]
 				else:
-					
 					self.scroll_buffer = [self.out.fill_str_size(buf,self.width)] + self.scroll_buffer
-					
 		elif line_num > -1 and line_num < self.scroll_buffer_size:
+			if line_num > len(self.scroll_buffer) and line_num < self.scroll_buffer_size:
+				for i in range( line_num - len(self.scroll_buffer)+1 ):
+					self.scroll_buffer.append("-".ljust(self.width))
 			if column_offset > 0:
 				buf_len = len(self.out.strip_ansi(buf))# without ansi
 				self.scroll_buffer[line_num] = self.scroll_buffer[line_num][:column_offset] + buf + self.scroll_buffer[line_num][(column_offset+buf_len):]
@@ -505,6 +648,8 @@ class panel(object):
 				self.scroll_buffer[line_num] = self.out.fill_str_size(buf,self.width)
 
 	def print_header(self):
+		if self.out.stdout_log == True:
+			out.stdout_restore()
 		line_num = 0
 		sys.stdout.write(chr(27) + "[s")		# save cur pos
 		for h in self.header.split('\n'):		# multiline
@@ -513,13 +658,19 @@ class panel(object):
 			self.y += 1
 			self.height -= 1
 		sys.stdout.write(chr(27) + "[u")		# restore
+		if self.out.stdout_log == True:
+			out.stdout_capture()
 
 	def print_buffer(self,line_num=-1):
+		if self.out.stdout_log == True:
+			out.stdout_restore()
 		sys.stdout.write(chr(27) + "[s")
 		add_front = ""
 		add_end = ""
 		line = ""
-		style = {'bg':'WHITE','fg':'RED'}
+		selected_style = {'bg':'WHITE','fg':'RED'}
+		selected_row_style = {'bg':'RED','fg':'WHITE'}
+
 		if self.reverse_output == False:
 			_range = range(0,self.height-1)
 		else:
@@ -534,7 +685,15 @@ class panel(object):
 				else:
 					line = self.out.fill_str_size("",self.width)
 				if self.selected == True:
+					style = selected_style
+					if (self.selected_line >-1 and self.selected_line == line_num):
+						style = selected_row_style
+						
 					line = self.out.do_style(line.ljust(self.width),style)
+				if len(self.print_filter) > 0:
+					if self.print_filter not in line:
+						sys.stdout.write(chr(27) + "[K")
+						continue
 				sys.stdout.write(chr(27) + "[" + str(line_num-1+self.y+self.out.header_size+self.out.height_offset) + ";" + str(self.x+1) + "H" + line)
 		elif line_num == -1:
 			for line_num in _range:
@@ -542,13 +701,22 @@ class panel(object):
 					line = self.buffer[line_num]
 				else: # else fill with nothing
 					line = "".ljust(self.width,'.')
-					#sys.stdout.write(chr(27) + "[" + str(line_num-1+self.y+self.out.header_size+self.out.height_offset) + ";" + str(self.x+1) + "H" + add_front + "".ljust(self.width,'.') + add_end)
 				if self.selected == True:
+					style = selected_style
+					if (self.selected_line >-1 and self.selected_line == line_num):
+						style = selected_row_style
 					line = self.out.do_style(line.ljust(self.width),style)
+				if len(self.print_filter) > 0:
+					if self.print_filter not in line:
+						sys.stdout.write(chr(27) + "[K")
+						continue
 				sys.stdout.write(chr(27) + "[" + str(line_num-1+self.y+self.out.header_size+self.out.height_offset) + ";" + str(self.x+1) + "H" + line)
 		else: # re-print only one line (in the panel)
 			line = self.out.line_buffer[line_num+self.y][self.x:self.x+self.width]
 			if self.selected == True:
 				line = self.out.do_style(line.ljust(self.width),style)
+
 			sys.stdout.write(chr(27) + "[" + str(line_num-1+self.y+self.out.header_size+self.out.height_offset) + ";" + str(self.x+1) + "H" + line)
 		sys.stdout.write(chr(27) + "[u") # restore cur pos
+		if self.out.stdout_log == True:
+			out.stdout_capture()
