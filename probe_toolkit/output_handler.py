@@ -98,6 +98,7 @@ class output_handler(object):
 				self.log_file = open(config['log_file'], 'a')
 			except:
 				self.output("ERROR","Could not open log_file")
+		sys.stdout.write(chr(27) + "[?25l") # hide cursor
 		self.print_vars(config)
 		self.print_header()
 
@@ -556,7 +557,6 @@ class panel(object):
 		self.x = x
 		self.y = y
 		self.out = out
-		sys.stdout.write(chr(27) + "[?25l") # hide cursor
 
 		if scroll_buffer_size > 0:
 			self.scroll_buffer = [""] # TODO need to remove the normal buffer and merge with scroll buffer (rm buffer, mv scroll_buffer buffer, and do check if scroll buffer is set then it can override max height.)
