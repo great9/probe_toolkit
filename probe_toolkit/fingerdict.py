@@ -82,7 +82,7 @@ class fingerdict(object):
 				if(tag_id != '0') and tag_id != '3': # we do not want the ssid and current channel to be added.
 					try:
 						if tag_id == '221' and tag[1][:6] == '0050f2': # Microsoft
-							tag[1] = tag[1][:12]
+							tag[1] = tag[1][:10]
 					except:
 						pass
 					buf.append([tag_id,tag[1]])
